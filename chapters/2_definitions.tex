@@ -1,0 +1,207 @@
+% \chapter{Mathematical Definitions}
+
+% \section{Input and Output}
+% \subsection{Crease Pattern}
+% \section{Local Flat Folding}
+% \section{Arrangement}
+% \section{Layering and Flat Folding}
+% \section{Cell Adjacency Graph}
+% \section{Ply and Treewidth}
+
+\chapter{Theoretical Foundations}
+
+\section{Crease Patterns and Flat Folding}
+
+\subsection{Formal Definition of Crease Patterns}
+
+%% open line segments, rays, or lines called creases - will ich das so introducen? So ambigious? Ist das alles richtig?
+A crease pattern forms the mathematical foundation for analyzing origami folding. We define a crease pattern as a subset of the plane together with a system of open line segments, rays, or lines called creases. Each crease has an open neighborhood within which it is the only crease, ensuring local uniqueness.
+
+For computational purposes, we focus on finite crease patterns containing finitely many creases. A finite crease pattern can be formally represented as a tuple $(V, E, p, c)$ where:
+
+\begin{itemize}
+%% defined as points where more than one crease meets - hm??
+\item $V$ represents the set of vertices, defined as points where more than one crease meets
+\item $E$ represents the set of creases (edges) connecting vertices
+\item $p: E \to \mathbb{R}^2 \times \mathbb{R}^2$ maps each crease to its geometric representation as a line segment
+\item $c: E \to \{M, V, B\}$ assigns each crease a type: Mountain (M), Valley (V), or Boundary (B)
+\end{itemize}
+
+%% hier würde ich glaube ich noch einfügen, wenn wir eine richtung als "oben" wählen
+The crease assignment function $c$ distinguishes between different fold types. Mountain creases fold ``away'' from the observer, valley creases fold ``toward'' the observer, and boundary creases represent the edges of the paper that do not fold.
+
+\subsection{Local Flat Folding}
+
+%% mathematical framework - ist es das? ich finde es viel mehr, dass es eine (nach einer oBdA choice) implizierte eigenschaft eines cp's ist. cp ist konstant (invariant?) bis auf drehungen / translations / spiegelungen des kompletten resultierenden local flat foldings
+%% möchte ich es eher so schreiben, dass ich die introduction eines local flat folding motiviere; warum das sinnvoll sein könnte
+%% Vllt möchte ich mit legit einer bilderreihe anfangen wie man das problem bearbeitet / einmal praktisch durchrechnen
+The concept of local flat folding provides a mathematical framework for describing how a crease pattern maps a flat surface to itself, without initially considering the spatial arrangement of layers.
+
+\begin{definition}[Local Flat Folding]
+A local flat folding of a crease pattern $P$ is a continuous function $\phi: P \to \mathbb{R}^2$ such that:
+\begin{itemize}
+\item For each open subset $S \subset P$ that does not intersect any crease, $\phi$ acts as an isometry
+\item For each open subset $S \subset P$ containing a single crease $c$, any two points that are reflections of each other across $c$ have the same image under $\phi$
+\end{itemize}
+\end{definition}
+
+In essence, $\phi$ represents a continuous piecewise isometry where creases serve as boundaries between regions on which the function acts isometrically.
+
+%% laufzeiten sind hier noch fehl am platz?
+Given a finite crease pattern $P$, we can construct a local flat folding $\phi$ for $P$ in linear time, if one exists, or determine that no such folding exists.
+
+%% construction ist hier auch noch fehl am platz
+%% <demo bild> ... formal def ist local flat folding als ... eine theoretische konstruktion geschieht wie folgt <hier stehender algo> in der praxis können wir mit folgender BFS erreichen
+%% maybe aber theoretische konstruktion auslassen? oder theoretische konstruktion -> praktische konstruktion ist der step wo ich homogene transformation matricies introduce
+%% dann brauche ich aber auch einen unterpunkt irgendwo (nähe bei implementation / vllt später bei vollständiger implementation) die auf die spezielle homogene transformation matrix entlang eines creases geht.
+The construction algorithm proceeds as follows:
+
+\begin{enumerate}
+\item Choose an arbitrary starting polygon (face) $F_s$ in the crease pattern
+\item Set $\phi$ to be the identity transformation within $F_s$
+\item Perform a breadth-first traversal of adjacent polygons:
+\begin{itemize}
+\item When traversing from a polygon with known mapping to an unmapped polygon, set the new polygon's mapping to be the reflection of the known mapping across the shared crease
+\item When traversing to a polygon with existing mapping, verify consistency with the reflection operation
+\end{itemize}
+\end{enumerate}
+
+%% ah hier haben wir invarianz / eindeutigkeit bis auf rigid transformations (ist das der richtige begriff?)
+If any inconsistency is detected during traversal, no local flat folding exists. The resulting function $\phi$, when it exists, is unique up to rigid transformations of the plane.
+
+%% beinhaltet ein local flat folding nicht schon ein arrangement? --> Nein weil local flat folding ist diese \varphi funktion
+%% was ist hier der offizielle name aus dem paper für den schritt?
+%% "system of images under φ of all creases in P"?
+
+%% Stuktur-Idee: praktische Vorgehensweise am anfang einmal durch spielen um dann davon motivierte definitionen zu betrachten / das zu formalisieren
+\subsection{Arrangement and Ply}
+
+The arrangement of a local flat folding captures the geometric structure of the folded pattern in the plane.
+
+\begin{definition}[Arrangement]
+The arrangement of a local flat folding $\phi$ of crease pattern $P$ is the system of images under $\phi$ of all creases in $P$.
+\end{definition}
+
+%% hört sich zu mathematisch an? oder theoretisch motiviert aber ich möchte ja da schon eine praktische motiviation vorschieben
+%% "a more tractable computational model" ~> das ist nicht more tractable dadurch / verwässert den begriff hier 
+These crease images partition the plane into cells---maximal regions not crossed by any crease image. Rather than considering individual point images, we work with preimages of entire cells, which provides a more tractable computational model.
+
+\begin{definition}[Ply]
+The ply of a cell is the number of preimages of that cell under the local flat folding $\phi$. The ply of the entire crease pattern is the maximum ply over all cells.
+\end{definition}
+
+The ply represents the maximum number of paper layers that can overlap at any point in the folded result. Using standard computational geometry techniques, an arrangement of a local flat folding with $n$ creases has complexity $O(n^2)$ and can be constructed in $O(n^2)$ time.
+
+\section{From Local Flat Folding to Flat Folding}
+
+\subsection{Layering and Spatial Embedding}
+
+A local flat folding alone does not specify how layers of paper are ordered in three-dimensional space. To complete the folding model, we introduce the concept of layering.
+
+%% wie ist die definition aus dem orig paper? ist das korrekt? ist die partial oder complete? oder ist das "stark genug definiert" im flat folding enthalten?
+\begin{definition}[Layering]
+A layering of a local flat folding is a vertical ordering of the preimages for each cell of the arrangement.
+\end{definition}
+
+\begin{definition}[Flat Folding]
+A flat folding consists of a local flat folding and a layering that, for every $\epsilon > 0$, is consistent with a topological embedding of the crease pattern into three-dimensional space that is $\epsilon$-close to the local flat folding.
+\end{definition}
+
+The proximity condition ensures that the three-dimensional embedding closely approximates the planar local flat folding, while the topological embedding provides the necessary layer ordering information.
+
+\subsection{Uncrossed Layering Conditions}
+
+For a layering to correspond to a valid flat folding, it must satisfy certain geometric constraints at each crease. These constraints prevent impossible layer configurations that would require paper to pass through itself.
+
+A cross-section across any crease involves layers from two adjacent arrangement cells. The layers must satisfy three fundamental conditions:
+
+\textbf{Consistency Condition}: If two polygons span adjacent cells without being creased, they must maintain consistent ordering in both cells rather than crossing at the crease boundary.
+
+\textbf{Taco-Tortilla Property}: If two layers of the same cell meet in a crease, any uncreased polygon spanning the adjacent cells cannot lie between the two creased layers, as the crease would physically block it.
+
+\textbf{Taco-Taco Property}: If two creased pairs of layers form the same crease line, their layers cannot alternate in the vertical ordering, as this would create an impossible crossing configuration.
+
+Additionally, when creases are labeled as mountain or valley folds, the layer ordering must respect these fold assignments.
+
+\begin{definition}[Uncrossed Layering]
+A layering is uncrossed when it satisfies all consistency, taco-tortilla, and taco-taco conditions at every crease, along with any mountain/valley fold constraints.
+\end{definition}
+
+\begin{lemma}
+A local flat folding of a finite crease pattern corresponds to a flat folding if and only if it admits an uncrossed layering.
+\end{lemma}
+
+This fundamental result establishes that testing flat-foldability reduces to finding an uncrossed layering for a given local flat folding.
+
+\section{Cell Adjacency Graphs and Structural Analysis}
+
+\subsection{Cell Adjacency Graph Construction}
+
+To analyze the complexity of finding uncrossed layerings, we construct a graph that captures the adjacency relationships between cells in the arrangement.
+
+\begin{definition}[Cell Adjacency Graph]
+Given an arrangement of a local flat folding, the cell adjacency graph $G = (V, E)$ has:
+\begin{itemize}
+\item Vertices $V$ corresponding to cells of the arrangement
+\item Edges $E$ connecting vertices whose corresponding cells share a crease boundary
+\end{itemize}
+\end{definition}
+
+This graph encodes the local structure of the folding problem. The complexity of finding valid layerings depends critically on the structural properties of this graph.
+
+\subsection{Treewidth and Parameterized Complexity}
+
+The treewidth of the cell adjacency graph serves as a crucial parameter for algorithmic tractability.
+
+\begin{definition}[Tree Decomposition]
+A tree decomposition of graph $G = (V, E)$ is a pair $(T, \{X_t\}_{t \in V(T)})$ where $T$ is a tree and each $X_t \subseteq V$ is a bag such that:
+\begin{itemize}
+\item $\bigcup_{t \in V(T)} X_t = V$
+\item For each edge $(u,v) \in E$, there exists $t \in V(T)$ with $\{u,v\} \subseteq X_t$
+\item For each $v \in V$, the set $\{t \in V(T) : v \in X_t\}$ induces a connected subtree of $T$
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Treewidth]
+The width of a tree decomposition is $\max_{t \in V(T)} |X_t| - 1$. The treewidth of graph $G$ is the minimum width over all tree decompositions of $G$.
+\end{definition}
+
+\begin{definition}[Nice Tree Decomposition]
+A nice tree decomposition is a rooted tree decomposition where each node is one of four types:
+\begin{itemize}
+\item \textbf{Leaf}: A leaf node with empty bag
+\item \textbf{Introduce}: A node with one child, where the bag contains exactly one more vertex than the child's bag
+\item \textbf{Forget}: A node with one child, where the bag contains exactly one fewer vertex than the child's bag  
+\item \textbf{Join}: A node with two children, where all three bags are identical
+\end{itemize}
+\end{definition}
+
+Any tree decomposition can be converted to a nice tree decomposition of the same width with at most $O(|V|)$ nodes.
+
+The significance of treewidth lies in enabling dynamic programming approaches that process the graph structure in a controlled manner, avoiding the exponential blowup that occurs with arbitrary graph structures.
+
+\section{Complexity Framework}
+
+\subsection{Parameterized Tractability}
+
+The flat-foldability problem exhibits fixed-parameter tractability when parameterized by both the ply $p$ and the treewidth $w$ of the cell adjacency graph.
+
+\begin{definition}[Fixed-Parameter Tractability]
+A parameterized problem is fixed-parameter tractable (FPT) with respect to parameter $k$ if it can be solved in time $f(k) \cdot n^{O(1)}$ for some computable function $f$ depending only on $k$.
+\end{definition}
+
+For the flat-foldability problem, we achieve tractability with parameters $p$ (ply) and $w$ (treewidth), yielding an algorithm with runtime $(p!)^{O(w)} \cdot n^2$.
+
+\subsection{State Space Analysis}
+
+The dynamic programming approach operates on states defined for each bag of the tree decomposition.
+
+\begin{definition}[Bag State]
+For any bag $B$ in a tree decomposition, a state of $B$ is a layering (vertical ordering) of each cell in $B$.
+\end{definition}
+
+The number of possible states for a bag containing cells with maximum ply $p$ is bounded by $(p!)^{|B|}$. Since $|B| \leq w + 1$ in a tree decomposition of width $w$, each bag has at most $(p!)^{w+1}$ possible states.
+
+This exponential dependence on both ply and treewidth reflects the fundamental complexity of the layering problem, while the polynomial dependence on the number of creases $n$ comes from the arrangement construction and tree decomposition algorithms.
+
+The theoretical framework established in this chapter provides the foundation for the algorithmic approach described in Chapter 3, where we detail how dynamic programming on tree decompositions can efficiently explore the exponential state space to determine flat-foldability.

@@ -1,0 +1,71 @@
+\chapter{Introduction}
+
+\section{Motivation}
+
+Origami, the traditional Japanese art of paper folding, has evolved far beyond its artistic origins to become a subject of rigorous mathematical and computational study. The fundamental question of whether a given crease pattern can be folded flat—known as the flat-foldability problem—represents one of the most intriguing challenges at the intersection of computational geometry, graph theory, and combinatorial optimization.
+
+The practical implications of understanding flat-foldability extend well beyond recreational mathematics. Modern applications span robotics, where origami-inspired mechanisms enable compact storage and deployment of structures; aerospace engineering, where foldable solar panels and antennas must satisfy strict geometric constraints; and materials science, where programmable matter relies on predictable folding behaviors. In each of these domains, the ability to computationally verify whether a proposed crease pattern will fold as intended is crucial for design validation and optimization.
+
+Despite decades of research, the computational complexity of flat-foldability has remained a challenging open problem. While local conditions for flat-foldability—such as Kawasaki's theorem and Maekawa's theorem—provide necessary conditions for individual vertices, the global problem of determining whether an entire crease pattern admits a valid flat folding has proven significantly more complex. Previous approaches have either focused on restricted classes of crease patterns or have not provided efficient algorithms for the general case.
+
+\section{Problem Statement}
+
+This thesis addresses the computational complexity of determining flat-foldability for finite crease patterns. Specifically, we consider crease patterns where each crease is assigned one of three types: mountain (M), valley (V), or boundary (B). The central question is whether such a pattern can be folded into a flat configuration without violating the geometric constraints imposed by the paper's topology and the assigned fold directions.
+
+The problem is complicated by several factors. First, the arrangement of creases in their folded positions creates a complex geometric structure where multiple layers of paper may overlap. Second, the layering of these overlapping regions must satisfy strict ordering constraints to avoid impossible crossings. Third, the global nature of these constraints means that local modifications can have far-reaching effects throughout the pattern.
+
+Recent work by Eppstein has shown that this problem becomes tractable when parameterized by two key quantities: the ply of the crease pattern (the maximum number of paper layers that overlap at any point) and the treewidth of an associated cell adjacency graph. This parameterized approach provides the first polynomial-time algorithm for flat-foldability testing in the general case, with runtime complexity $(p!)^{O(w)}n^2$ where $p$ is the ply, $w$ is the treewidth, and $n$ is the number of creases.
+
+\section{Research Objectives}
+
+The primary objective of this thesis is to implement and evaluate Eppstein's algorithm for testing flat-foldability of finite crease patterns. This implementation serves multiple purposes: it provides the first practical realization of the theoretical algorithm, enables empirical validation of the predicted complexity bounds, and reveals the practical challenges inherent in translating theoretical algorithms to working code.
+
+Our specific research goals are:
+
+\textbf{Implementation Goal}: Develop a complete, working implementation of the five-step algorithm described in Eppstein's paper, including local flat folding construction, arrangement computation, cell adjacency graph generation, tree decomposition, and dynamic programming.
+
+\textbf{Complexity Analysis Goal}: Empirically validate the theoretical runtime complexity of $(p!)^{O(w)}n^2$ by measuring actual performance on test instances with varying values of $n$, $p$, and $w$.
+
+\textbf{Practical Evaluation Goal}: Identify and analyze the practical bottlenecks, numerical challenges, and implementation trade-offs that arise when moving from theoretical description to working code.
+
+\textbf{Scalability Assessment Goal}: Determine the practical limits of the algorithm by testing it on increasingly large and complex crease patterns, identifying which steps become computational bottlenecks in practice.
+
+\section{Approach and Methodology}
+
+Our implementation strategy prioritizes correctness and theoretical fidelity over raw performance optimization. We employ a multi-language approach, using Python for rapid prototyping and leveraging established computational geometry libraries, while keeping open the possibility of implementing performance-critical components in C++ as needed.
+
+The implementation is structured around five distinct algorithmic phases, each building upon the results of the previous phase. We use exact arithmetic where possible to avoid numerical precision issues that could compromise the correctness of geometric computations. The modular design allows us to benchmark individual phases separately, providing insight into which components dominate the overall runtime.
+
+For empirical evaluation, we plan to test the implementation on both synthetic crease patterns with controlled structural properties and real-world origami designs from established databases. This dual approach allows us to validate theoretical predictions while also assessing performance on patterns that origami practitioners actually use.
+
+\section{Contributions}
+
+This thesis makes several contributions to the field of computational origami:
+
+\textbf{First Complete Implementation}: We provide the first working implementation of Eppstein's flat-foldability algorithm, making this theoretical breakthrough accessible to researchers and practitioners.
+
+\textbf{Empirical Complexity Validation}: Through systematic benchmarking, we provide the first empirical validation of the $(p!)^{O(w)}n^2$ complexity bound, revealing how the theoretical predictions translate to real-world performance.
+
+\textbf{Implementation Insights}: We identify and document the practical challenges that arise when implementing sophisticated computational geometry algorithms, providing guidance for future implementations of similar algorithms.
+
+\textbf{Performance Characterization}: We characterize which algorithmic phases dominate runtime in practice, revealing opportunities for optimization and highlighting the practical bottlenecks that may limit scalability.
+
+\textbf{Open-Source Toolkit}: Our implementation provides an open-source foundation for future research in computational origami, enabling other researchers to build upon our work.
+
+\section{Thesis Structure}
+
+The remainder of this thesis is organized as follows:
+
+\textbf{Chapter 2} establishes the theoretical foundations, providing formal definitions of crease patterns, local flat foldings, arrangements, and the various geometric and topological concepts required to understand the algorithm.
+
+\textbf{Chapter 3} presents a detailed description of Eppstein's five-step algorithm, explaining each phase and its role in the overall approach.
+
+\textbf{Chapter 4} describes our implementation strategy, including technology choices, data structure design, and the specific challenges encountered in each algorithmic phase.
+
+\textbf{Chapter 5} presents our empirical evaluation, including performance measurements, complexity validation, and analysis of scalability limits.
+
+\textbf{Chapter 6} discusses the implications of our results, identifies opportunities for optimization, and suggests directions for future research.
+
+\textbf{Chapter 7} concludes with a summary of our contributions and their significance for the field of computational origami.
+
+Through this systematic study of both the theoretical algorithm and its practical implementation, we aim to bridge the gap between computational complexity theory and the practical needs of researchers and engineers working with origami-inspired systems.

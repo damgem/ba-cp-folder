@@ -1,0 +1,211 @@
+% \chapter{Algorithm}
+
+% \section{Overview}
+
+% \section{Individual Steps}
+% \subsection{Local Flat Folding}
+% \subsection{Arrangement}
+% \subsection{Cell Adjacency Graph}
+% \subsection{Nice Tree Decomposition}
+% \subsection{Bag Sorting}
+
+% \section{Complexity}
+% \subsection{Total Runtime Complexity}
+% \subsection{Tractability}
+
+\chapter{Algorithm Description}
+
+This chapter provides a detailed description of the fixed-parameter tractable algorithm for testing flat-foldability of finite crease patterns, as presented by Eppstein. The algorithm operates in five distinct phases, each building upon the results of the previous steps to ultimately determine whether a given crease pattern admits a valid flat folding.
+
+\section{Algorithm Overview}
+
+The algorithm takes as input a finite crease pattern with $n$ creases, where each crease is labeled as mountain (M), valley (V), or boundary (B). The goal is to determine whether this pattern can be flat-folded while respecting the geometric constraints imposed by the crease assignments and the topological structure of the pattern.
+
+The five main phases of the algorithm are:
+
+\begin{enumerate}
+\item \textbf{Local Flat Folding Construction}: Attempt to construct a valid local flat folding of the crease pattern
+\item \textbf{Arrangement Construction}: Build the arrangement of crease images in the folded state
+\item \textbf{Cell Adjacency Graph}: Construct the cell adjacency graph from the arrangement
+\item \textbf{Nice Tree Decomposition}: Find and convert a tree decomposition to nice form
+\item \textbf{Dynamic Programming}: Execute bottom-up dynamic programming to test for valid layerings
+\end{enumerate}
+
+If any step fails to produce a valid result, the algorithm terminates and reports that the crease pattern is not flat-foldable. The algorithm succeeds if and only if the final dynamic programming phase finds at least one valid state at the root of the tree decomposition.
+
+\section{Step 1: Local Flat Folding Construction}
+
+The first step attempts to construct a local flat folding $\phi$ of the input crease pattern. This phase implements the linear-time algorithm described in Observation 1.
+
+\textbf{Algorithm}: The construction proceeds by face traversal:
+
+\begin{enumerate}
+\item Choose an arbitrary starting face $F_s$ from the crease pattern
+\item Set the homogeneous transformation matrix of $F_s$ to the identity matrix $I_3$
+\item Perform a breadth-first or depth-first traversal of adjacent faces:
+\begin{itemize}
+\item For each unvisited face $F$ adjacent to a visited face $F'$ across crease $c$:
+\begin{itemize}
+\item Compute the homogeneous transformation matrix $T_c$ representing the folding operation at crease $c$
+\item Set the transformation matrix of $F$ to $T_{F'} \cdot T_c$
+\end{itemize}
+\item For each visited face $F$ encountered during traversal:
+\begin{itemize}
+\item Verify that the computed transformation matrix matches the previously assigned matrix
+\item If matrices differ, report that no local flat folding exists and terminate
+\end{itemize}
+\end{itemize}
+\end{enumerate}
+
+\textbf{Transformation Matrices}: The folding transformation across a crease is represented as a reflection across the crease line. For a crease defined by line $ax + by + c = 0$, the reflection matrix in homogeneous coordinates is:
+
+$$
+T = \frac{1}{a^2 + b^2} \begin{pmatrix}
+a^2 - b^2 & 2ab & 2ac \\
+2ab & b^2 - a^2 & 2bc \\
+0 & 0 & a^2 + b^2
+\end{pmatrix}
+$$
+
+\textbf{Complexity}: This step runs in $O(n)$ time, where $n$ is the number of creases, since each face and crease is visited at most once during the traversal.
+
+\section{Step 2: Arrangement Construction}
+
+Given a valid local flat folding $\phi$, the second step constructs the arrangement of crease images under $\phi$. This arrangement partitions the plane into cells—maximal regions not crossed by any crease image.
+
+\textbf{Construction Process}:
+\begin{enumerate}
+\item Apply the local flat folding transformation $\phi$ to each crease in the pattern
+\item Compute all intersection points between crease images using computational geometry algorithms
+\item Construct the planar subdivision induced by the crease images and their intersections
+\item Identify the resulting cells and compute the ply (number of preimages) for each cell
+\end{enumerate}
+
+\textbf{Data Structures}: The arrangement can be represented using a Doubly Connected Edge List (DCEL) or similar planar graph structure that maintains:
+\begin{itemize}
+\item Vertices (intersection points and crease endpoints)
+\item Edges (crease segments between intersections)
+\item Faces (cells of the arrangement)
+\item Incidence relationships between these elements
+\end{itemize}
+
+\textbf{Ply Computation}: For each cell in the arrangement, determine how many preimages it has under the local flat folding. This requires tracking which original faces of the crease pattern map to each cell.
+
+\textbf{Complexity}: Using standard computational geometry algorithms, the arrangement of $n$ line segments can be constructed in $O(n^2)$ time and has $O(n^2)$ complexity in the worst case.
+
+\section{Step 3: Cell Adjacency Graph Construction}
+
+The third step constructs the cell adjacency graph from the arrangement computed in Step 2. This graph captures the adjacency relationships between cells that are relevant for determining valid layerings.
+
+\textbf{Graph Construction}:
+\begin{itemize}
+\item \textbf{Vertices}: Each cell in the arrangement corresponds to a vertex in the cell adjacency graph
+\item \textbf{Edges}: Two vertices are connected by an edge if and only if their corresponding cells are adjacent across a crease image in the arrangement
+\end{itemize}
+
+\textbf{Adjacency Determination}: Two cells are considered adjacent if they share a boundary segment that corresponds to a crease image. The adjacency relationship is crucial because layering constraints (taco-tortilla and taco-taco properties) only apply between layers that meet at creases.
+
+\textbf{Graph Properties}: The resulting cell adjacency graph inherits structural properties from the original crease pattern and its folding. Patterns with simple geometric structure often yield graphs with low treewidth, making them amenable to efficient dynamic programming.
+
+\textbf{Complexity}: The cell adjacency graph has $O(n^2)$ vertices and $O(n^2)$ edges in the worst case, matching the complexity of the arrangement.
+
+\section{Step 4: Nice Tree Decomposition}
+
+The fourth step finds a tree decomposition of the cell adjacency graph and converts it to nice form. This step is crucial for the efficiency of the subsequent dynamic programming phase.
+
+\textbf{Tree Decomposition}: A tree decomposition of graph $G = (V, E)$ consists of a tree $T$ and a collection of subsets $\{B_t : t \in V(T)\}$ (called bags) such that:
+\begin{itemize}
+\item $\bigcup_{t \in V(T)} B_t = V$
+\item For each edge $(u,v) \in E$, there exists a bag $B_t$ containing both $u$ and $v$
+\item For each vertex $v \in V$, the set $\{t \in V(T) : v \in B_t\}$ induces a connected subtree of $T$
+\end{itemize}
+
+The \textbf{width} of the decomposition is $\max_{t \in V(T)} |B_t| - 1$.
+
+\textbf{Nice Tree Decomposition}: A tree decomposition is nice if it is rooted and every node is one of four types:
+\begin{itemize}
+\item \textbf{Leaf bag}: A leaf of the tree with $|B_t| = 1$
+\item \textbf{Introduce bag}: Has exactly one child $t'$ with $B_t = B_{t'} \cup \{v\}$ for some vertex $v$
+\item \textbf{Forget bag}: Has exactly one child $t'$ with $B_t = B_{t'} \setminus \{v\}$ for some vertex $v$
+\item \textbf{Join bag}: Has exactly two children $t_1, t_2$ with $B_t = B_{t_1} = B_{t_2}$
+\end{itemize}
+
+\textbf{Construction Algorithm}: 
+\begin{enumerate}
+\item Use parameterized algorithms to find a tree decomposition of width approximately $w$, where $w$ is the treewidth of the cell adjacency graph
+\item Convert the tree decomposition to nice form using standard techniques, which may increase the width by at most a constant factor
+\item The conversion preserves the essential structural properties needed for dynamic programming
+\end{enumerate}
+
+\textbf{Complexity}: Recent parameterized algorithms can construct a tree decomposition of width $O(w)$ in time $2^{O(w)}n^2$, where $w$ is the optimal treewidth.
+
+\section{Step 5: Dynamic Programming}
+
+The final and most computationally intensive step performs bottom-up dynamic programming on the nice tree decomposition to determine whether a valid layering exists.
+
+\subsection{States and Validity}
+
+\textbf{State Definition}: For any bag $B$ in the tree decomposition, a state of $B$ is a layering of each cell in $B$. Since each cell has ply $p_i$, a layering assigns a vertical ordering to the $p_i$ preimages of that cell.
+
+\textbf{State Space}: A bag containing cells with plies $p_1, p_2, \ldots, p_k$ has at most $\prod_{i=1}^k p_i!$ possible states. Since each ply is at most $p$ and each bag contains at most $w+1$ cells, the number of states per bag is bounded by $(p!)^{w+1}$.
+
+\textbf{Valid States}: A state of bag $B$ is valid if and only if there exists a layering that is uncrossed at all creases between pairs of cells that occur together in $B$ or its descendants in the tree decomposition (Lemma 4).
+
+\subsection{Dynamic Programming Recurrence}
+
+The algorithm processes bags in bottom-up order according to their type in the nice tree decomposition:
+
+\textbf{Leaf Bags}: All states are valid since there are no creases between pairs of cells to cause crossings.
+
+\textbf{Introduce Bags}: For a bag $B$ with child $B'$ where $B = B' \cup \{c\}$ for some cell $c$:
+\begin{itemize}
+\item For each valid state $s'$ of $B'$ and each possible layering $\ell$ of cell $c$:
+\begin{itemize}
+\item Check whether the combined state $(s', \ell)$ satisfies the uncrossed layering conditions
+\item This requires examining at most $w$ creases between $c$ and cells in $B'$
+\item Each crease check takes $O(p)$ time to verify the taco-tortilla and taco-taco properties
+\end{itemize}
+\end{itemize}
+
+\textbf{Forget Bags}: For a bag $B$ with child $B'$ where $B' = B \cup \{c\}$ for some cell $c$:
+\begin{itemize}
+\item Every valid state of $B'$ induces a valid state of $B$ by forgetting the layering of cell $c$
+\item Simply project each valid state of $B'$ onto the cells in $B$
+\end{itemize}
+
+\textbf{Join Bags}: For a bag $B$ with children $B_1$ and $B_2$ where $B = B_1 = B_2$:
+\begin{itemize}
+\item A state is valid for $B$ if and only if it is valid for both $B_1$ and $B_2$
+\item Compute the intersection of valid states from both children using bit arrays for efficiency
+\end{itemize}
+
+\subsection{Layering Constraint Verification}
+
+The core computational challenge lies in efficiently verifying the uncrossed layering conditions:
+
+\textbf{Taco-Tortilla Property}: If two layers of the same cell meet in a crease, any uncreased polygon spanning the two cells cannot lie between the two creased layers.
+
+\textbf{Taco-Taco Property}: If two creased pairs of layers form the same crease line, their layers cannot alternate in the layering order.
+
+\textbf{Mountain/Valley Consistency}: If creases are labeled as mountain or valley folds, the layering must respect these assignments.
+
+Each constraint check involves comparing the relative positions of at most $p$ layers across a single crease, requiring $O(p)$ time per check.
+
+\section{Complexity Analysis}
+
+\textbf{Time Complexity}: The overall algorithm runs in time $(p!)^{O(w)}n^2$, where:
+\begin{itemize}
+\item $n^2$ factor comes from arrangement construction and tree decomposition
+\item $(p!)^{O(w)}$ factor comes from the dynamic programming phase
+\item Each bag has at most $(p!)^{w+1}$ states
+\item Processing each bag takes time $O(pw(p!)^{w+1})$
+\item The tree decomposition has $O(n^2)$ bags
+\end{itemize}
+
+\textbf{Space Complexity}: The algorithm requires $O((p!)^w n^2)$ space to store the valid states for all bags in the tree decomposition.
+
+\textbf{Parameter Dependence}: The algorithm is fixed-parameter tractable when parameterized by both ply $p$ and treewidth $w$. For constant values of these parameters, the algorithm runs in polynomial time in $n$.
+
+\textbf{Practical Considerations}: While the theoretical complexity involves factorial terms, many real-world origami patterns have small ply (typically $p \leq 4$) and low treewidth, making the algorithm practically feasible for moderately sized patterns.
+
+The exponential dependence on treewidth is unavoidable under standard complexity-theoretic assumptions, as the flat-foldability problem is NP-hard for general graphs. However, the fixed-parameter tractability result shows that the problem becomes efficiently solvable for the restricted class of patterns with bounded structural complexity.
