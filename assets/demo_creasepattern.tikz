@@ -1,0 +1,10 @@
+\begin{tikzpicture}[
+    mountain/.style={red, thick, dashed},
+    valley/.style={blue, thick, dash dot},
+    border/.style={black}
+]
+    \draw[border] (0,0) -- (0,4) -- (4,4) -- (4,0) -- cycle;
+    \draw[mountain] (3,0) -- (3,4);
+    \draw[mountain] (3,2) -- (4,3);
+    \draw[valley] (3,2) -- (1,4);
+\end{tikzpicture}
