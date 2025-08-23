@@ -1,18 +1,20 @@
 \chapter{Practical Motivation}
 
+Before approaching the algorithm in a more formal and rigerous 
+
 Before jumping into the algorithm I would like to motivate the algorithm in an intuitive way.
 
 I will introduce formal definitions of crease patterns and flat foldability in the next chapter.
-For now let's very roughly say a creaes pattern is a sheet with creases that are assigned either mountain (M) or valley (V).
-The creases (M/V) and borders of the paper (assignment = "B") are represented by edges of a planar graph.
+For now, let's very roughly say a creaes pattern is a sheet with creases that are assigned either mountain (M) or valley (V).
+The creases (M/V) and borders of the paper (assignment = ``B'') are represented by edges of a planar graph.
 
-As a very rough notion let's define that a crease pattern is considered to be flat foldable if there exists a configuration
+As a very rough notion, let's define that a crease pattern is considered to be flat-foldable if there exists a configuration
 of the paper such that each crease is folded according to its assignment and the paper does not intersect itself at any point.
 
 We can represent a crease pattern by a planar geometric graph that has
 \begin{itemize}
-    \item{nodes at all the corners of the paper with straight edges between those. we will set their assignment to "B" (border).}
-    \item nodes where any pair of creases intersect or where a crease touches the border of the paper.
+    \item nodes at all the corners of the paper with straight edges between those; we will set their assignment to ``B'' (border),
+    \item nodes where any pair of creases intersect or where a crease touches the border of the paper, and
     \item edges between nodes that represent parts or complete creases. When the "back of the crease" faces the observer we note down it's assignment as "M" (mountain crease). When if faces away it from the observer it's assigned "V" (valley crease).
 \end{itemize}
 
@@ -48,7 +50,7 @@ face which connects to another face by what type of crease (M/V) it was and the 
 \label{fig:demo_faces}
 \end{figure}
 
-Continuing with the examplary crease pattern from Figure~\ref{fig:demo_creasepattern} this step looks like Figure~\ref{fig:demo_faces}.
+Continuing with the exemplary crease pattern from Figure~\ref{fig:demo_creasepattern} this step looks like Figure~\ref{fig:demo_faces}.
 
 We have seperated the different faces of the crease pattern and assigned them ids from 1 to 4.
 Each edge that was part of a crease is colored according to the crease type (red = mountain; blue = valley) while noting down the originally neighbouring face.
@@ -79,28 +81,31 @@ In the third step we position face 3 mirrored along the common edge with face 1.
 Finally we position face 4 along the common edge with face 3.
 As face 3 is already mirrored face 4 will be doubly mirrored aka not mirrored.
 
-We could've used the common edge of face 4 with face 2 to find its relative positioning too.
-In fact if a flat folded configuration exists at all then this will result in the same positioning.
+We could have used the common edge of face 4 with face 2 to find its relative positioning as well.
+If a flat-folded configuration exists at all, these two constructions must agree; this is consistent with Kawasaki's
+theorem at a single vertex, which states that for any node in a flat-foldable crease pattern when alternatively adding and subracting the angles of subsequent folds around the node the sum must equal to $0$. %% https://en.wikipedia.org/wiki/Kawasaki\%27s_theorem
 
-This is a result of Kawasaki's theorem that states that the sum of alternating angles between the edges incident to a node must cancel out to zero. 
-If by this process we position a face so that not all of its edges align with the corresponding edges of neighbouring faces
-then we can already conclude that the crease pattern is not flat foldable.
+If during this process we position a face so that not all of its edges align with the corresponding edges of neighboring
+faces, then we can already conclude that the crease pattern is not flat-foldable.
 
-Great! Now we have an intersection free configuration of the crease pattern, except we're dealing with cut out versions of the faces.
-When reconnecting the faces we're not guranteed 
+Up to this point, our construction process has determined where each face is positioned in the 2D plane relative to our reference frame.
+However, we don't have any guarantee that the reconnected paper will be intersection-free.
+The faces we've positioned might be ordered in problematic ways when we consider them as parts of a continuous sheet of paper so that they intersect at their edges.
 
-- davon ausgehend dass ich das physische modell mit der 3. dimension habe:
-- mache klar, dass das ordering jetzt eher folge der construction steps ist
-- garantiert keine intersection-freeness
-- sollten alle orderings angucken
+To address this, we need to introduce a third dimension back into our model - specifically, the stacking order of the faces. While the paper itself remains flat (zero thickness), we need to determine which face lies "above" or "below" another at any point where they overlap in our 2D projection.
 
-- dann können wir das contraint der edge types einführen
-- zuletzt die taco / tortilla notion / betrachtugn / kategorisierung
+The key insight is that we need to find a valid ordering of all faces such that:
+1. Faces that share a crease are adjacent in the stacking order (no other face lies between them)
+2. The relative orientation of adjacent faces respects the crease assignment (mountain or valley)
+3. No face penetrates through a crease formed by two other faces
 
-So now it's about reconnecting the faces that share common edges.
+Rather than being constrained to the ordering that emerged from our construction steps, we should consider all possible orderings of the faces and check which ones satisfy these constraints.
 
-For this first we need to introduce somewhat of a third dimension back into our model. The relative order of the faces is ignored / the physical mod
+This is where we can introduce the constraint of edge types more formally. At every point where creases intersect in our 2D projection, we need to examine the cross-sectional view to ensure the crease assignments are respected and no intersections occur.
 
+Finally, we can categorize the types of violations that can occur in these cross-sections, leading us to the "taco" and "tortilla" classification that helps us systematically check for intersection-free configurations.
+
+So now it's about reconnecting the faces that share common edges while respecting these ordering constraints.
 As we've already determined the relative positioning of the faces, finding a flat folding is now reduced
 to finding a ordering of the original faces such that the paper does not intersect itself.
 
@@ -144,3 +149,171 @@ This creates a self intersection of the paper.
 \caption{Alternate face orderings that create self intersections in the crossection examined in Figure~\ref{fig:demo_csx_taco_tortilla} (left) and in Figure~\ref{fig:demo_csx_taco_taco} (right).}.
 \label{fig:demo_csx_bad_ordering}
 \end{figure}
+
+The two crossectional views above are chosen along an edge such that each plane either forms a crease at the crossection or penetrates the crossection along the total length.
+
+We want to reduce the simplicity of this structure so that we 
+
+
+\chapter{Formal Definitions}
+
+Given the intuitive approach in the previous chapter I will formalize the algorithms and introduce
+proper named states / steps.
+
+\section{Crease Pattern}
+
+There exist different formal definitions of crease patterns in literature.
+The reference paper defines a crease pattern in a more general way that enables the study of crease patterns in arbitrary topologies with infinite numbers of creases.
+
+To make the algorithm more accessible, we will use a more concrete definition of a crease pattern.
+Thus we constrain ourselves to a planar geometric definition that captures the unfolded state of a crease pattern on flat paper with no cuts.
+
+\begin{definition}[Crease Pattern]
+~\\
+A \textbf{Crease Pattern} is a tuple $C = (V, E, \phi, \alpha)$ with:
+\begin{itemize}
+    \item $V$ is a finite set of vertices
+    \item $E \subseteq \binom{V}{2}$ is the set of undirected straight-line edges
+    \item $\phi: V \hookrightarrow \mathbb{R}^2$ is an embedding mapping vertices to distinct points in the plane
+    \item $\alpha: E \to \{\mathsf{M}, \mathsf{V}, \mathsf{B}\}$ assigns each edge a type: mountain ($\mathsf{M}$), valley ($\mathsf{V}$) or border ($\mathsf{B}$)
+    \item All vertices $v \in V$ have degree $\delta(v) \geq 2$
+    \item The geometric graph $(V, E, \phi)$ is connected and has no edge crossings
+    \item The border edges $E_{\mathsf{B}} := \{e \in E \mid \alpha(e) = \mathsf{B}\}$ form a simple cycle
+    \item All edges lie within or on the boundary of the polygon defined by the border edges $E_{\mathsf{B}}$
+\end{itemize}
+\end{definition}
+
+%% maybe include a photo of a real world crease pattern and the representation of the crease pattern
+
+\subsection{Faces}
+Since $(V,E,\phi)$ is a connected planar graph embedded in $R^2$, it partitions the plane into a set of faces.
+Let $F_C$ denote the set of bounded faces (excluding the outer infinite face).
+For all faces $f \in F$, let $V_f \subseteq V$ denote the set of vertices on the boundary of $f$, and let $E_f \subseteq E$ denote the edges on the boundary of $f$.
+
+\section{Local Flat Folding}
+
+\begin{definition}[Local Flat Folding]
+~\\
+Let $C = (V, E, \phi, \alpha)$ be a crease pattern.\\
+A function $\varphi: V \to \mathbb{R}^2$ is a \textbf{local flat folding} of $C$ if it satisfies:
+
+\begin{enumerate}
+    \item \textbf{Face preservation:} For each face $f \in F_C$, the point sets $\{\phi(v) \mid v \in V_f\}$ and $\{\varphi(v) \mid v \in V_f\}$ are congruent.
+    % $\forall f \in F_C: \text{the point sets } \{\phi(v) \mid v \in V_f\} \text{ and } \{\varphi(v) \mid v \in V_f\} \text{ are congruent (same shape and size)}$
+    \item \textbf{Reflection consistency:} For each crease edge $e = \{u,v\} \in E \setminus E_{\mathsf{B}}$ shared by faces $f_1, f_2 \in F_C$, the image of face $f_2$ under $\varphi$ is the reflection of the image of face $f_1$ across the line segment $\varphi(u)\varphi(v)$.
+    % $\forall f_1, f_2 \in F_C \text{ with } E \ni \{v,w\} \in V_{f_1} \cap V_{f_2}:$ relative to $f_1$: $f_2$ is mirrored along their common edge.
+\end{enumerate}
+\end{definition}
+
+\section{Shadow Graph / Master Graph}
+
+The shadow graph is the Local Flat Folding graph but planarized / regularized, such that:
+
+\begin{itemize}
+    \item Vertecies that are mapped to the same point in the plane are merged
+    \item Edges that intersect in a point are split at that point and a new vertex is inserted
+    \item Edges that overlap are split and the overlapping part is merged together
+    \item Edges retain the information about which crease(s) they represent
+\end{itemize}
+
+\section{Face Layering}
+
+A order of the faces.
+
+
+\section{Flat Foldability}
+
+A face layering such that the paper does not self-intersect.
+
+This is not rigid-foldability and there might not exist a sequence of folds which during each folding motion retains the rigidity of the faces but rather, that during a folding sequence it might be that the faces are deformed / bent.
+An example of a crease pattern that is flat foldable but not rigid flat foldable can be seen in Figure \ref{fig:example_non_rigid}.
+When folding the right side along the left valley crease onto the left side, the ``flaps'' of the right side must be bent to fit through the slit, to enable folding a second time along the right valley crease.
+This is not a property of the concavety of the paper and crease patterns on a convex paper can be constructed such that faces must be bent during folding motions.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{assets/example_non_rigid.png}
+\caption{Example of a crease pattern that is flat foldable but not rigid flat foldable.}.
+\label{fig:example_non_rigid}
+\end{figure}
+
+An example of this is
+
+\section{Cell-Adjacency Graph}
+
+This is the dual graph of the shadow graph.
+
+\section{Tractable: Tree-Width and Ply}
+
+Tree-width is the tree-width of the cell-adjacency graph.
+Ply is the maximum number of faces that overlap at any point in the plane.
+This is the maximum number of faces a cell represents in the cell-adjacency graph.
+
+When fixing tree-width and ply, the complexity of the algorithm is polynomial in the number of creases (edges) in the input and called ``tractable''.
+
+
+\chapter{Algorithm}
+
+\begin{lstlisting}
+class NodeAttributes:
+    position: tuple[float, float]
+
+class EdgeAttributes:
+    crease_type: Literal["M", "V", "B"]
+
+class Graph:
+    nodes: dict[int, NodeAttributes]
+    edges: dict[tuple[int, int], EdgeAttributes]
+\end{lstlisting}
+
+\begin{lstlisting}
+def bfs_iter(graph, start_node):
+    queue = []
+    visited = set()
+
+    for start in graph.nodes():
+        if start not in visited:
+            queue.append(start)
+            visited.add(start)
+            while queue:
+                node = queue.pop(0)
+                yield node
+                for neighbor in graph.neighbors(node):
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(neighbor)
+\end{lstlisting}
+
+
+
+
+% A folded state of a crease pattern is a configuration of the paper in 3D space where:
+% \begin{itemize}
+%     \item we treat the paper as having zero thickness
+%     \item The paper is folded along the creases according to their assigned types (mountain or valley) by 180 degrees
+%     \item The paper does not self-intersect
+%     \item the paper is continious and not cut or torn
+%     \item the paper is not deformed in any way other than folding along the creases
+%     \item The configuration is in 3D space but one dimension ist collapsed to the relative ordering of the layers
+% \end{itemize}
+
+% We can help visualize this by thinking of:
+%  - the layers entirely parallel in a plane; this creates a set of parallel planes with $\epsilon$ distance between them
+%  - at a crease the paper is folded by 180 degrees jumping from one plane to another one
+%  - we replace the crease by a 90 degree turn in the paper in the third dimension, where extra paper length equal to $k \times \epsilon$ is added (when jumping $k$ layers "up" or "down")
+
+% E.g. 
+
+
+% A flat-folded state of a crease pattern $C = (V, E, \phi, \alpha)$ is a configuration where:
+% \begin{enumerate}
+% \item The paper lies entirely in a plane (the "folding plane")
+% \item Each point in the folding plane may contain multiple layers of paper
+% \item Layers have zero thickness but maintain a strict vertical ordering
+% \item No self-intersection occurs between layers
+% \item All creases are folded according to their assigned types
+% \end{enumerate}
+
+This does not capture that there's a way to fold the paper to a flat folded state without arbitrarily deforming the faces during the folding process.
+
+%% TODO: <EXAMPLE>
